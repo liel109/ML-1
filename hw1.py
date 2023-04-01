@@ -1,6 +1,6 @@
 ###### Your ID ######
-# ID1: 123456789
-# ID2: 987654321
+# ID1: 209207380
+# ID2: 206910333
 #####################
 
 # imports 
@@ -19,7 +19,6 @@ def preprocess(X,y):
     - X: The mean normalized inputs.
     - y: The mean normalized labels.
     """
-    print(X.shape)
     mean_vec = np.mean(X,0)
     min_max_vec = X.max(0)-X.min(0)
     X = (X - mean_vec) / (min_max_vec)
@@ -235,8 +234,5 @@ def create_square_features(df):
                 new_col.name = f"{col1}*{col2}"
                 df_poly = pd.concat([df_poly,new_col],axis=1)
 
-
     return df_poly
 
-def extract_col(matrix, col):
-    return matrix[: ,col]
