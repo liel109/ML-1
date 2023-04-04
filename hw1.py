@@ -38,8 +38,8 @@ def apply_bias_trick(X):
     - X: Input data with an additional column of ones in the
         zeroth position (m instances over n+1 features).
     """
-    ones_matrix = np.ones(X.shape[0])
-    X = np.column_stack((ones_matrix, X))
+    ones_matrix = np.ones(X.shape[0]) # create a vector of ones
+    X = np.column_stack((ones_matrix, X)) # add the vector of ones to the input data
     return X
 
 def compute_cost(X, y, theta):
@@ -157,11 +157,11 @@ def find_best_alpha(X_train, y_train, X_val, y_val, iterations):
     
     alphas = [0.00001, 0.00003, 0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 2, 3]
     alpha_dict = {} # {alpha_value: validation_loss}
-    np.random.seed(42)
-    theta_guess = np.random.random(X_train.shape[1])
+    np.random.seed(42) # creates a random seed
+    theta_guess = np.random.random(X_train.shape[1]) # creates a random vector 
     for alpha in alphas:
-        theta, _ = efficient_gradient_descent(X_train, y_train, theta_guess, alpha, iterations)
-        alpha_dict[alpha] = compute_cost(X_val, y_val, theta)
+        theta, _ = efficient_gradient_descent(X_train, y_train, theta_guess, alpha, iterations)# train the model using the selected alpha
+        alpha_dict[alpha] = compute_cost(X_val, y_val, theta)# compute the loss on the validation set
 
     return alpha_dict
 
@@ -185,19 +185,19 @@ def forward_feature_selection(X_train, y_train, X_val, y_val, best_alpha, iterat
     """
     selected_features = []
     np.random.seed(42)
-    features_list = [i for i in range(0,X_train.shape[1])]
+    features_list = [i for i in range(0,X_train.shape[1])]# list of the indexes valid features to be selected
     for i in range(5):
+        theta_guess = np.random.random(i+2)# creates a random theta vector
         costs_dict = {}
         for feature in features_list:
-            selected_features.append(feature)
-            theta_guess = np.random.random(i+2)
-            theta, _ = efficient_gradient_descent(apply_bias_trick(X_train[:, selected_features]), y_train, theta_guess, best_alpha, iterations)
-            costs_dict[feature] = compute_cost(apply_bias_trick(X_val[:, selected_features]), y_val, theta)
-            selected_features.pop()
+            selected_features.append(feature)# add the feature to the selected features
+            theta, _ = efficient_gradient_descent(apply_bias_trick(X_train[:, selected_features]), y_train, theta_guess, best_alpha, iterations)# train the model using the selected feature
+            costs_dict[feature] = compute_cost(apply_bias_trick(X_val[:, selected_features]), y_val, theta)# compute the loss on the validation set for the selected feature
+            selected_features.pop()# remove the feature from the selected features
         
-        min_feature = min(costs_dict, key = costs_dict.get)
-        selected_features.append(min_feature)
-        features_list.remove(min_feature)
+        min_feature = min(costs_dict, key = costs_dict.get) # get the feature with the minimum loss of validation 
+        selected_features.append(min_feature) # add the feature to the selected features
+        features_list.remove(min_feature)# remove the feature from the list of valid features to be selected
 
     return selected_features
 
@@ -220,10 +220,7 @@ def create_square_features(df):
     df_poly = df.copy()
     for i,col1 in enumerate(df.columns):
         for col2 in df.columns[i:]:
-            """ if col1 == col2:
-                df_poly[f"{col1}^2"] = df[col1] ** 2
-            else:
-                df_poly[f"{col1}*{col2}"] = df[col1] * df[col2] """
+         
             if col1 == col2:
                 new_col = df[col1] ** 2
                 new_col.name = f"{col1}^2"
@@ -235,4 +232,23 @@ def create_square_features(df):
                 df_poly = pd.concat([df_poly,new_col],axis=1)
 
     return df_poly
+
+
+# def create_squere_feaures2(df):
+#     df_poly = df.copy()
+#     new_cols = []
+#     # empty list to store the new polynomial features
+#     for i, col in enumerate (df_poly.columns) :
+#         for col_2 in df_poly.columns[i:]:
+#             if col == col_2:
+#                 name = col + '^2'
+#             else:
+#                 name = col + '*' + col_2
+#             new_col = df_poly[col] * df_poly[col_2]
+#             new_col.name = name
+#             # Append the new column to the list of polynomial features
+#             new_cols.append(new_col)
+#     # concatenate original and new columns
+#     df_poly = pd.concat([df_poly] + new_cols, axis=1)
+#     return df_poly
 
