@@ -22,7 +22,6 @@ def preprocess(X,y):
     mean_vec = np.mean(X,0)
     min_max_vec = X.max(0)-X.min(0)
     X = (X - mean_vec) / (min_max_vec)
-
     y=(y-np.mean(y)) / (y.max() - y.min())
 
     return X, y
@@ -55,7 +54,7 @@ def compute_cost(X, y, theta):
     Returns:
     - J: the cost associated with the current set of parameters (single number).
     """
-    return np.sum(np.square(np.matmul(X,theta) - y)) / (X.shape[0] * 2)
+    return np.sum(np.square(X.dot(theta) - y)) / (X.shape[0] * 2)
 
 def gradient_descent(X, y, theta, alpha, num_iters):
     """
@@ -82,8 +81,8 @@ def gradient_descent(X, y, theta, alpha, num_iters):
     J_history = [] # Use a python list to save the cost value in every iteration
     for i in range(num_iters):
         J_history.append(compute_cost(X, y, theta))
-        vec = (np.matmul(X,theta) - y)
-        gradient = np.matmul(vec , X) / X.shape[0]
+        vec = (X.dot(theta) - y)
+        gradient = vec.dot(X) / X.shape[0]
         theta = theta - gradient * alpha
     return theta, J_history
 
@@ -129,12 +128,12 @@ def efficient_gradient_descent(X, y, theta, alpha, num_iters):
     theta = theta.copy() # optional: theta outside the function will not change
     J_history = [] # Use a python list to save the cost value in every iteration
     for i in range(num_iters):
-        J_history.append(compute_cost(X, y, theta))
         if i > 1 and (J_history[-2] - J_history[-1]) < 1e-8 :
             break
-        vec = (np.matmul(X,theta) - y)
-        gradient = np.matmul(vec , X) / X.shape[0]
+        vec = (X.dot(theta) - y)
+        gradient = vec.dot(X) / X.shape[0]
         theta = theta - gradient * alpha
+        J_history.append(compute_cost(X, y, theta))
     
     return theta, J_history
 
@@ -185,13 +184,14 @@ def forward_feature_selection(X_train, y_train, X_val, y_val, best_alpha, iterat
     """
     selected_features = []
     np.random.seed(42)
-    features_list = [i for i in range(0,X_train.shape[1])]# list of the indexes valid features to be selected
+    features_list = [i for i in range(X_train.shape[1])] # list of the indexes valid features to be selected
     for i in range(5):
-        theta_guess = np.random.random(i+2)# creates a random theta vector
+        theta_guess = np.random.random(i+2) # creates a random theta vector
         costs_dict = {}
         for feature in features_list:
-            selected_features.append(feature)# add the feature to the selected features
-            theta, _ = efficient_gradient_descent(apply_bias_trick(X_train[:, selected_features]), y_train, theta_guess, best_alpha, iterations)# train the model using the selected feature
+            selected_features.append(feature) # add the feature to the selected features
+            # theta, _ = efficient_gradient_descent(apply_bias_trick(X_train[:, selected_features]), y_train, theta_guess, best_alpha, iterations)# train the model using the selected feature
+            theta = compute_pinv(apply_bias_trick(X_train[:, selected_features]),y_train)
             costs_dict[feature] = compute_cost(apply_bias_trick(X_val[:, selected_features]), y_val, theta)# compute the loss on the validation set for the selected feature
             selected_features.pop()# remove the feature from the selected features
         
@@ -233,22 +233,4 @@ def create_square_features(df):
 
     return df_poly
 
-
-# def create_squere_feaures2(df):
-#     df_poly = df.copy()
-#     new_cols = []
-#     # empty list to store the new polynomial features
-#     for i, col in enumerate (df_poly.columns) :
-#         for col_2 in df_poly.columns[i:]:
-#             if col == col_2:
-#                 name = col + '^2'
-#             else:
-#                 name = col + '*' + col_2
-#             new_col = df_poly[col] * df_poly[col_2]
-#             new_col.name = name
-#             # Append the new column to the list of polynomial features
-#             new_cols.append(new_col)
-#     # concatenate original and new columns
-#     df_poly = pd.concat([df_poly] + new_cols, axis=1)
-#     return df_poly
 
