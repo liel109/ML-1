@@ -39,6 +39,7 @@ def apply_bias_trick(X):
     """
     ones_matrix = np.ones(X.shape[0]) # create a vector of ones
     X = np.column_stack((ones_matrix, X)) # add the vector of ones to the input data
+    
     return X
 
 def compute_cost(X, y, theta):
@@ -84,6 +85,7 @@ def gradient_descent(X, y, theta, alpha, num_iters):
         vec = (X.dot(theta) - y)
         gradient = vec.dot(X) / X.shape[0]
         theta = theta - gradient * alpha
+    
     return theta, J_history
 
 def compute_pinv(X, y):
@@ -104,6 +106,7 @@ def compute_pinv(X, y):
     """
     X_t = np.transpose(X)
     pinv = np.matmul(np.linalg.inv(np.matmul(X_t, X)), X_t)
+    
     return np.matmul(pinv,y)
 
 def efficient_gradient_descent(X, y, theta, alpha, num_iters):
@@ -132,11 +135,10 @@ def efficient_gradient_descent(X, y, theta, alpha, num_iters):
             break
         vec = (X.dot(theta) - y)
         gradient = vec.dot(X) / X.shape[0]
-        theta = theta - gradient * alpha
+        theta = theta - (gradient * alpha)
         J_history.append(compute_cost(X, y, theta))
     
     return theta, J_history
-
 
 def find_best_alpha(X_train, y_train, X_val, y_val, iterations):
     """
@@ -183,27 +185,23 @@ def forward_feature_selection(X_train, y_train, X_val, y_val, best_alpha, iterat
     - selected_features: A list of selected top 5 feature indices
     """
     selected_features = []
-    np.random.seed(42)
     features_list = [i for i in range(X_train.shape[1])] # list of the indexes valid features to be selected
     for i in range(5):
+        np.random.seed(42)
         theta_guess = np.random.random(i+2) # creates a random theta vector
         costs_dict = {}
         for feature in features_list:
             selected_features.append(feature) # add the feature to the selected features
-            # theta, _ = efficient_gradient_descent(apply_bias_trick(X_train[:, selected_features]), y_train, theta_guess, best_alpha, iterations)# train the model using the selected feature
-            theta = compute_pinv(apply_bias_trick(X_train[:, selected_features]),y_train)
+            X_candidate = apply_bias_trick(X_train[:, selected_features])
+            theta, _ = efficient_gradient_descent(X_candidate, y_train, theta_guess, best_alpha, iterations)# train the model using the selected feature
             costs_dict[feature] = compute_cost(apply_bias_trick(X_val[:, selected_features]), y_val, theta)# compute the loss on the validation set for the selected feature
-            selected_features.pop()# remove the feature from the selected features
+            selected_features.remove(feature)# remove the feature from the selected features
         
         min_feature = min(costs_dict, key = costs_dict.get) # get the feature with the minimum loss of validation 
         selected_features.append(min_feature) # add the feature to the selected features
         features_list.remove(min_feature)# remove the feature from the list of valid features to be selected
 
     return selected_features
-
-
-
-
 
 def create_square_features(df):
     """
@@ -232,5 +230,3 @@ def create_square_features(df):
                 df_poly = pd.concat([df_poly,new_col],axis=1)
 
     return df_poly
-
-
